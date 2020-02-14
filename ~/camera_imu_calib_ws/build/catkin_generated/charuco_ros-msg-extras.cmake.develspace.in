@@ -1,0 +1,2 @@
+set(charuco_ros_MESSAGE_FILES "/home/prashant/camera_imu_calib_ws/src/charuco_ros/msg/SingleCorner.msg;/home/prashant/camera_imu_calib_ws/src/charuco_ros/msg/ArucoCornerMsg.msg;/home/prashant/camera_imu_calib_ws/src/charuco_ros/msg/OneMarker.msg")
+set(charuco_ros_SERVICE_FILES "")

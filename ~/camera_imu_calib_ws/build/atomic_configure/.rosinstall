@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/prashant/camera_imu_calib_ws/devel/setup.sh
