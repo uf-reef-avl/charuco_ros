@@ -1,6 +1,3 @@
 uint32 id
 
-SingleCorner top_left
-SingleCorner top_right
-SingleCorner bottom_right
-SingleCorner bottom_left
+SingleCorner corner

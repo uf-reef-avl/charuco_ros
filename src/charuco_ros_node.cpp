@@ -20,7 +20,7 @@
 #include <tf2_eigen/tf2_eigen.h>
 #include <eigen3/Eigen/Dense>
 
-#include <charuco_ros/ArucoCornerMsg.h>
+#include <charuco_ros/CharucoCornerMsg.h>
 
 class CharucoBoard{
 
@@ -79,17 +79,17 @@ public:
         nh.param<float>("square_length", square_length, 0.05);
         nh.param<int>("x_square", x_square, 6);
         nh.param<int>("y_square", y_square, 4);
-        nh.param<int>("num_marker", nMarkers, 12);
-        nMarkerDetectThreshold = nMarkers/2;
+        nh.param<int>("num_marker", nMarkers, 15);
+        nMarkerDetectThreshold = nMarkers/2; // for our application we want them to be equal
 
         nh.param<bool>("image_is_rectified", useRectifiedImages, true);
         nh.param<bool>("draw_markers", draw_markers, true);
         nh.param<bool>("publish_tf", publish_tf, false);
-        nh.param<bool>("publish_corners", publish_corners, false);
+        nh.param<bool>("publish_corners", publish_corners, true);
 
 
         if(publish_corners)
-            corner_pub = nh.advertise<charuco_ros::ArucoCornerMsg>("corner",100);
+            corner_pub = nh.advertise<charuco_ros::CharucoCornerMsg>("corner",100);
 
         cv::aruco::PREDEFINED_DICTIONARY_NAME dictionaryId = cv::aruco::DICT_4X4_50;
         dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
@@ -136,45 +136,36 @@ public:
                 return;
             }
 
-            ROS_WARN_STREAM("corners dectects \t" << charucoCorners);
-
             if (publish_corners){
-                charuco_ros::ArucoCornerMsg cornerMsg;
+                charuco_ros::CharucoCornerMsg cornerMsg;
                 charuco_ros::OneMarker PixelMsg;
                 charuco_ros::OneMarker MetricMsg;
                 cornerMsg.header = msg->header;
+                std::vector< cv::Point3f> objCorners;
+                for(int y = 1; y<y_square; y++){
+                    for(int x =1; x<x_square; x++){
+                        cv::Point3f corner;
+                        corner.x = (x+1) * square_length;
+                        corner.y = (y+1) * square_length;
+                        corner.z = 0;
+                        objCorners.push_back(corner);
+                    }
+                }
 
-                for (int i = 0; i < (int) ids.size(); i++)
+                for (int i = 0; i < (int) charucoIds.size(); i++)
                 {
                     int index = std::distance(board_ids.begin(), std::find (board_ids.begin(), board_ids.end(), ids[i]));
                     if ( index < 0 || index > board_ids.size()-1)
                         continue;
-                    PixelMsg.id = ids[i];
-                    PixelMsg.top_left.x = corners[i][0].x;
-                    PixelMsg.top_left.y = corners[i][0].y;
-                    PixelMsg.top_right.x = corners[i][1].x;
-                    PixelMsg.top_right.y = corners[i][1].y;
-                    PixelMsg.bottom_right.x = corners[i][2].x;
-                    PixelMsg.bottom_right.y = corners[i][2].y;
-                    PixelMsg.bottom_left.x = corners[i][3].x;
-                    PixelMsg.bottom_left.y = corners[i][3].y;
-
+                    PixelMsg.id = charucoIds[i];
+                    PixelMsg.corner.x = charucoCorners[i].x;
+                    PixelMsg.corner.y = charucoCorners[i].y;
                     cornerMsg.pixel_corners.push_back(PixelMsg);
 
-                    MetricMsg.id = ids[i];
-                    MetricMsg.top_left.x = idcornerspx.at(index).at<cv::Vec3f>(0, 0)[0];
-                    MetricMsg.top_left.y = idcornerspx.at(index).at<cv::Vec3f>(0, 0)[1];
-                    MetricMsg.top_left.z = idcornerspx.at(index).at<cv::Vec3f>(0, 0)[2];
-                    MetricMsg.top_right.x = idcornerspx.at(index).at<cv::Vec3f>(0, 1)[0];
-                    MetricMsg.top_right.y = idcornerspx.at(index).at<cv::Vec3f>(0, 1)[1];
-                    MetricMsg.top_right.z = idcornerspx.at(index).at<cv::Vec3f>(0, 1)[2];
-                    MetricMsg.bottom_right.x = idcornerspx.at(index).at<cv::Vec3f>(0, 2)[0];
-                    MetricMsg.bottom_right.y = idcornerspx.at(index).at<cv::Vec3f>(0, 2)[1];
-                    MetricMsg.bottom_right.z = idcornerspx.at(index).at<cv::Vec3f>(0, 2)[2];
-                    MetricMsg.bottom_left.x = idcornerspx.at(index).at<cv::Vec3f>(0, 3)[0];
-                    MetricMsg.bottom_left.y = idcornerspx.at(index).at<cv::Vec3f>(0, 3)[1];
-                    MetricMsg.bottom_left.z = idcornerspx.at(index).at<cv::Vec3f>(0, 3)[2];
-
+                    MetricMsg.id = charucoIds[i];
+                    MetricMsg.corner.x = objCorners.at(charucoIds[i]).x;//idcornerspx.at(index).at<cv::Vec3f>(0, 0)[0];
+                    MetricMsg.corner.y = objCorners.at(charucoIds[i]).y;
+                    MetricMsg.corner.z = objCorners.at(charucoIds[i]).z;
                     cornerMsg.metric_corners.push_back(MetricMsg);
                 }
                 corner_pub.publish(cornerMsg);

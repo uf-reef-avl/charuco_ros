@@ -15,7 +15,7 @@
     <arg name="result_display" default="false"/>
     <arg name="result_autosize" default="true"/>
     <arg name="result_draw_markers" default="true" />
-    <arg name="publish_corners" default="false" />
+    <arg name="publish_corners" default="true" />
     <arg name="result_draw_markers_axis" default="true" />
     <arg name="publish_tf" default="true" />
     <arg name="uid" default=""/>
