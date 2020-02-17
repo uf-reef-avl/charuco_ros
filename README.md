@@ -6,22 +6,22 @@ A ROS package for 3D pose estimation using Charuco marker boards
 roslaunc charuco_ros basic.launch
 
 ### Dependencies
-cv_bridge
-geometry_msgs
-image_transport
-tf2
-tf2_eigen
+cv_bridge<br />
+geometry_msgs<br />
+image_transport<br />
+tf2<br />
+tf2_eigen<br />
 OpenCV
 
 ### Topics Subscripted to:
-/image [sensor_msgs/Image]
+/image [sensor_msgs/Image]<br />
 /camera_info [senor_msgs/CameraInfo]
 
 ### Topics Published:
-/corner [charuco_ros/CharucoCornerMsg]
-/pose [geometry_msgs/PoseStamped]
-/result [sensor_msgs/Image]
-/transform [geometry_msgs/TransformStamped]
+/corner [charuco_ros/CharucoCornerMsg]<br />
+/pose [geometry_msgs/PoseStamped]<br />
+/result [sensor_msgs/Image]<br />
+/transform [geometry_msgs/TransformStamped]<br />
 /tf [tf2_msgs/TFMessage]
 
 #### Notes
@@ -30,5 +30,5 @@ node where the corners are the intersection of two black squares of a checkerboa
 ArUco marker. Hence, we only have ONE corner rather than 4 in the previous type.
 
 #### TODOs:
-Add a script to generate the ChArUco board
+Add a script to generate the ChArUco board<br />
 Add a table with all the parameters that the node uses.
