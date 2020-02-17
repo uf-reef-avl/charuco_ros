@@ -1,0 +1,48 @@
+<launch>
+
+    <arg name="driver_astra" value="true"/>
+    <arg name="driver_openni2" value="false"/>
+
+    <group if="$(arg driver_astra)">
+        <include file="$(find astra_camera)/launch/astrapro.launch"/>
+        <arg name="camera_info" default="file://$(env HOME)/.ros/camera_info/rgb_Astra_Orbbec.yaml"/>
+    </group>
+
+    <group if="$(arg driver_openni2)">
+        <include file="$(find openni2_launch)/launch/openni2.launch"/>
+    </group>
+
+    <arg name="result_display" default="false"/>
+    <arg name="result_autosize" default="true"/>
+    <arg name="result_draw_markers" default="true" />
+    <arg name="publish_corners" default="false" />
+    <arg name="result_draw_markers_axis" default="true" />
+    <arg name="publish_tf" default="true" />
+    <arg name="uid" default=""/>
+    <arg name="video_rectified" default="false" />
+
+    <node ns="/" pkg="charuco_ros" type="node" name="charuco_node" output="screen">
+        <remap from="/camera_info" to="/camera/rgb/camera_info" if="$(arg driver_astra)"/>
+        <remap from="/image" to="/camera/rgb/image_raw" if="$(arg driver_astra)"/>
+        <remap from="/camera_info" to="/camera/rgb/camera_info" if="$(arg driver_openni2)"/>
+        <remap from="/image" to="/camera/rgb/image_raw" if="$(arg driver_openni2)"/>
+        <param name="image_is_rectified" type="bool" value="$(arg video_rectified)"/>
+        <param name="draw_markers" type="bool" value="$(arg result_draw_markers)" />
+        <param name="draw_markers_axis" type="bool" value="$(arg result_draw_markers_axis)" />
+        <param name="publish_tf" value="$(arg publish_tf)" />
+        <param name="publish_corners" value="$(arg publish_corners)" />
+    </node>
+
+    <group if="$(arg result_display)">
+        <node ns="/" pkg="image_view" type="image_view" name="image_view$(arg uid)" output="screen">
+            <!--            <remap from="image" to="/camera/rgb/image_raw" />-->
+            <remap from="image" to="/charuco_ros/result" />
+            <param name="autosize" type="bool" value="$(arg result_autosize)" />
+        </node>
+    </group>
+
+
+
+
+
+</launch>

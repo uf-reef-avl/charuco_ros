@@ -31,14 +31,16 @@ private:
     bool draw_markers;
     bool publish_tf;
     bool publish_corners;
-
-    ros::Subscriber cam_info_sub;
     bool cam_info_received;
+
+    int nMarkerDetectThreshold;
+    int nMarkers;
 
     image_transport::Publisher image_pub;
     ros::Publisher transform_pub;
     ros::Publisher pose_pub;
     ros::Publisher corner_pub;
+    ros::Subscriber cam_info_sub;
 
     double board_scale;
     std::vector< cv::Mat > idcorners;
@@ -63,10 +65,11 @@ public:
 
     CharucoBoard() : cam_info_received(false),
     nh("~"),
-    it(nh) {
+    it(nh),
+    nMarkerDetectThreshold(0)    {
 
-        image_sub = it.subscribe("/image", 1, &CharucoBoard::image_callback, this);
-        cam_info_sub = nh.subscribe("/camera_info", 1, &CharucoBoard::cam_info_callback, this);
+        image_sub = it.subscribe("/camera/rgb/image_raw", 1, &CharucoBoard::image_callback, this);
+        cam_info_sub = nh.subscribe("/camera/rgb/camera_info", 1, &CharucoBoard::cam_info_callback, this);
 
         image_pub = it.advertise("result", 1);
         transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
@@ -76,9 +79,11 @@ public:
         nh.param<float>("square_length", square_length, 0.05);
         nh.param<int>("x_square", x_square, 6);
         nh.param<int>("y_square", y_square, 4);
+        nh.param<int>("num_marker", nMarkers, 12);
+        nMarkerDetectThreshold = nMarkers/2;
 
         nh.param<bool>("image_is_rectified", useRectifiedImages, true);
-        nh.param<bool>("draw_markers", draw_markers, false);
+        nh.param<bool>("draw_markers", draw_markers, true);
         nh.param<bool>("publish_tf", publish_tf, false);
         nh.param<bool>("publish_corners", publish_corners, false);
 
@@ -113,6 +118,9 @@ public:
             // detect markers
             cv::aruco::detectMarkers(inImage, dictionary, corners, ids, detectorParams, rejected);
 
+            if (ids.size() <= nMarkerDetectThreshold)
+                return;
+
             std::vector<cv::Point2f> charucoCorners;
             std::vector<int> charucoIds;
 
@@ -127,6 +135,8 @@ public:
                           " when, in reality we must assert, z > 0." << std::endl;
                 return;
             }
+
+            ROS_WARN_STREAM("corners dectects \t" << charucoCorners);
 
             if (publish_corners){
                 charuco_ros::ArucoCornerMsg cornerMsg;
@@ -190,17 +200,18 @@ public:
             pose_pub.publish(poseMsg);
 
             resultImage = cv_ptr->image.clone();
-            if (draw_markers)
-                cv::aruco::drawDetectedMarkers(resultImage, corners, ids);
+            if (draw_markers) {
+                cv::aruco::drawDetectedCornersCharuco(resultImage, charucoCorners, charucoIds, cv::Scalar(255, 0, 0));
 
-            if (image_pub.getNumSubscribers() > 0) {
-                //show input with augmented information
-                cv_bridge::CvImage out_msg;
-                out_msg.header.frame_id = msg->header.frame_id;
-                out_msg.header.stamp = msg->header.stamp;
-                out_msg.encoding = sensor_msgs::image_encodings::RGB8;
-                out_msg.image = resultImage;
-                image_pub.publish(out_msg.toImageMsg());
+                if (image_pub.getNumSubscribers() > 0) {
+                    //show input with augmented information
+                    cv_bridge::CvImage out_msg;
+                    out_msg.header.frame_id = msg->header.frame_id;
+                    out_msg.header.stamp = msg->header.stamp;
+                    out_msg.encoding = sensor_msgs::image_encodings::RGB8;
+                    out_msg.image = resultImage;
+                    image_pub.publish(out_msg.toImageMsg());
+                }
             }
 
         } catch (cv_bridge::Exception& e) {
