@@ -28,6 +28,7 @@ private:
     cv::Mat inImage, resultImage;
     cv::Mat cameraMatrix, distortionCoeffs;
     bool draw_markers;
+    bool draw_axis;
     bool publish_tf;
     bool publish_corners;
     bool cam_info_received;
@@ -84,6 +85,7 @@ public:
         nMarkerDetectThreshold = nMarkers/2;
 
         nh.param<bool>("draw_markers", draw_markers, true);
+        nh.param<bool>("draw_axis", draw_axis, true);
         nh.param<bool>("publish_tf", publish_tf, false);
         nh.param<bool>("publish_corners", publish_corners, true);
 
@@ -96,6 +98,8 @@ public:
         detectorParams = cv::aruco::DetectorParameters::create();
         board = cv::aruco::CharucoBoard::create(x_square,y_square,square_length,marker_length,dictionary);
         detectorParams = cv::aruco::DetectorParameters::create();
+        detectorParams->doCornerRefinement = true;
+        detectorParams->cornerRefinementMaxIterations = 30;
     }
 
     void image_callback(const sensor_msgs::ImageConstPtr& msg) {
@@ -176,9 +180,13 @@ public:
             pose_pub.publish(poseMsg);
 
             resultImage = cv_ptr->image.clone();
-            if (draw_markers) {
+            if (draw_markers)
                 cv::aruco::drawDetectedCornersCharuco(resultImage, charucoCorners, charucoIds, cv::Scalar(255, 0, 0));
 
+            if (draw_axis)
+                cv::aruco::drawAxis(resultImage, cameraMatrix, distortionCoeffs, rvec, tvec, 2*square_length);
+
+            if(draw_axis || draw_markers) {
                 if (image_pub.getNumSubscribers() > 0) {
                     //show input with augmented information
                     cv_bridge::CvImage out_msg;
@@ -189,6 +197,7 @@ public:
                     image_pub.publish(out_msg.toImageMsg());
                 }
             }
+
 
         } catch (cv_bridge::Exception& e) {
             ROS_ERROR("cv_bridge exception: %s", e.what());
