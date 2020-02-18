@@ -27,7 +27,6 @@ class CharucoBoard{
 private:
     cv::Mat inImage, resultImage;
     cv::Mat cameraMatrix, distortionCoeffs;
-    bool useRectifiedImages;
     bool draw_markers;
     bool publish_tf;
     bool publish_corners;
@@ -35,6 +34,7 @@ private:
 
     int nMarkerDetectThreshold;
     int nMarkers;
+    int dictionary_id;
 
     image_transport::Publisher image_pub;
     ros::Publisher transform_pub;
@@ -68,8 +68,8 @@ public:
     it(nh),
     nMarkerDetectThreshold(0)    {
 
-        image_sub = it.subscribe("/camera/rgb/image_raw", 1, &CharucoBoard::image_callback, this);
-        cam_info_sub = nh.subscribe("/camera/rgb/camera_info", 1, &CharucoBoard::cam_info_callback, this);
+        image_sub = it.subscribe("/image", 1, &CharucoBoard::image_callback, this);
+        cam_info_sub = nh.subscribe("/camera_info", 1, &CharucoBoard::cam_info_callback, this);
 
         image_pub = it.advertise("result", 1);
         transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
@@ -80,19 +80,19 @@ public:
         nh.param<int>("x_square", x_square, 6);
         nh.param<int>("y_square", y_square, 4);
         nh.param<int>("num_marker", nMarkers, 15);
-        nMarkerDetectThreshold = nMarkers/2; // for our application we want them to be equal
+        nh.param<int>("dictionary_id", dictionary_id, 0);
+        nMarkerDetectThreshold = nMarkers/2;
 
-        nh.param<bool>("image_is_rectified", useRectifiedImages, true);
         nh.param<bool>("draw_markers", draw_markers, true);
         nh.param<bool>("publish_tf", publish_tf, false);
         nh.param<bool>("publish_corners", publish_corners, true);
 
+        ROS_INFO_STREAM("Initializing " <<x_square << "x" << y_square <<"ChArUco board. Aruco Marker Length " << marker_length << " Chessboard size " << square_length );
 
         if(publish_corners)
             corner_pub = nh.advertise<charuco_ros::CharucoCornerMsg>("corner",100);
-
-        cv::aruco::PREDEFINED_DICTIONARY_NAME dictionaryId = cv::aruco::DICT_4X4_50;
-        dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionaryId));
+//        cv::aruco::PREDEFINED_DICTIONARY_NAME dictionaryId = cv::aruco::DICT_4X4_50;
+        dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(dictionary_id));
         detectorParams = cv::aruco::DetectorParameters::create();
         board = cv::aruco::CharucoBoard::create(x_square,y_square,square_length,marker_length,dictionary);
         detectorParams = cv::aruco::DetectorParameters::create();
@@ -141,36 +141,21 @@ public:
                 charuco_ros::OneMarker PixelMsg;
                 charuco_ros::OneMarker MetricMsg;
                 cornerMsg.header = msg->header;
-                std::vector< cv::Point3f> objCorners;
-                for(int y = 1; y<y_square; y++){
-                    for(int x =1; x<x_square; x++){
-                        cv::Point3f corner;
-                        corner.x = (x+1) * square_length;
-                        corner.y = (y+1) * square_length;
-                        corner.z = 0;
-                        objCorners.push_back(corner);
-                    }
-                }
-
                 for (int i = 0; i < (int) charucoIds.size(); i++)
                 {
-                    int index = std::distance(board_ids.begin(), std::find (board_ids.begin(), board_ids.end(), ids[i]));
-                    if ( index < 0 || index > board_ids.size()-1)
-                        continue;
                     PixelMsg.id = charucoIds[i];
                     PixelMsg.corner.x = charucoCorners[i].x;
                     PixelMsg.corner.y = charucoCorners[i].y;
                     cornerMsg.pixel_corners.push_back(PixelMsg);
 
                     MetricMsg.id = charucoIds[i];
-                    MetricMsg.corner.x = objCorners.at(charucoIds[i]).x;//idcornerspx.at(index).at<cv::Vec3f>(0, 0)[0];
-                    MetricMsg.corner.y = objCorners.at(charucoIds[i]).y;
-                    MetricMsg.corner.z = objCorners.at(charucoIds[i]).z;
+                    MetricMsg.corner.x = board->chessboardCorners[charucoIds[i]].x;
+                    MetricMsg.corner.y = board->chessboardCorners[charucoIds[i]].y;
+                    MetricMsg.corner.z = board->chessboardCorners[charucoIds[i]].z;
                     cornerMsg.metric_corners.push_back(MetricMsg);
                 }
                 corner_pub.publish(cornerMsg);
             }
-
 
             Eigen::Affine3d transform_result;
             getTF(rvec, tvec, transform_result);

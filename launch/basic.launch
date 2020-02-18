@@ -15,26 +15,36 @@
     <arg name="result_display" default="false"/>
     <arg name="result_autosize" default="true"/>
     <arg name="result_draw_markers" default="true" />
+
     <arg name="publish_corners" default="true" />
-    <arg name="result_draw_markers_axis" default="true" />
     <arg name="publish_tf" default="true" />
-    <arg name="uid" default=""/>
-    <arg name="video_rectified" default="false" />
+    <arg name="marker_length" default="true" />
+    <arg name="square_length" default="true" />
+    <arg name="x_square" default="true" />
+    <arg name="y_square" default="true" />
+    <arg name="num_marker" default="true" />
+    <arg name="dictionary_id" default="true" />
 
     <node ns="/" pkg="charuco_ros" type="node" name="charuco_node" output="screen">
         <remap from="/camera_info" to="/camera/rgb/camera_info" if="$(arg driver_astra)"/>
         <remap from="/image" to="/camera/rgb/image_raw" if="$(arg driver_astra)"/>
         <remap from="/camera_info" to="/camera/rgb/camera_info" if="$(arg driver_openni2)"/>
         <remap from="/image" to="/camera/rgb/image_raw" if="$(arg driver_openni2)"/>
-        <param name="image_is_rectified" type="bool" value="$(arg video_rectified)"/>
         <param name="draw_markers" type="bool" value="$(arg result_draw_markers)" />
-        <param name="draw_markers_axis" type="bool" value="$(arg result_draw_markers_axis)" />
         <param name="publish_tf" value="$(arg publish_tf)" />
         <param name="publish_corners" value="$(arg publish_corners)" />
+        <param name="marker_length" value="$(arg marker_length)" />
+        <param name="square_length" value="$(arg square_length)" />
+        <param name="x_square" value="$(arg x_square)" />
+        <param name="y_square" value="$(arg y_square)" />
+        <param name="num_marker" value="$(arg num_marker)" />
+        <param name="dictionary_id" value="$(arg dictionary_id)" />
     </node>
 
+
+
     <group if="$(arg result_display)">
-        <node ns="/" pkg="image_view" type="image_view" name="image_view$(arg uid)" output="screen">
+        <node ns="/" pkg="image_view" type="image_view" name="image_view" output="screen">
             <!--            <remap from="image" to="/camera/rgb/image_raw" />-->
             <remap from="image" to="/charuco_ros/result" />
             <param name="autosize" type="bool" value="$(arg result_autosize)" />

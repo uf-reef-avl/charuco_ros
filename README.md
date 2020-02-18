@@ -30,5 +30,3 @@ node where the corners are the intersection of two black squares of a checkerboa
 ArUco marker. Hence, we only have ONE corner rather than 4 in the previous type.
 
 #### TODOs:
-Add a script to generate the ChArUco board<br />
-Add a table with all the parameters that the node uses.
