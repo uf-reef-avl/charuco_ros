@@ -71,8 +71,6 @@ public:
 
         image_sub = it.subscribe("/camera/rgb/image_raw", 1, &CharucoBoard::image_callback, this);
         cam_info_sub = nh.subscribe("/camera/rgb/camera_info", 1, &CharucoBoard::cam_info_callback, this);
-//        image_sub = it.subscribe("/camera/image_raw", 10, &CharucoBoard::image_callback, this);
-//        cam_info_sub = nh.subscribe("/camera/camera_info", 1, &CharucoBoard::cam_info_callback, this);
 
         image_pub = it.advertise("result", 1);
         transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
@@ -95,7 +93,7 @@ public:
 
         if(publish_corners)
             corner_pub = nh.advertise<charuco_ros::CharucoCornerMsg>("corner",100);
-        cv::aruco::PREDEFINED_DICTIONARY_NAME dictionaryId = cv::aruco::DICT_4X4_50;
+        cv::aruco::PREDEFINED_DICTIONARY_NAME dictionaryId = cv::aruco::DICT_4X4_50; //TODO: Paul, this value is NOT the same for all the boards.
         dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_ARUCO_ORIGINAL));
         detectorParams = cv::aruco::DetectorParameters::create();
         board = cv::aruco::CharucoBoard::create(x_square,y_square,square_length,marker_length,dictionary);

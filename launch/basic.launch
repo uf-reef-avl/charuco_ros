@@ -12,19 +12,19 @@
         <include file="$(find openni2_launch)/launch/openni2.launch"/>
     </group>
 
-    <arg name="result_display" default="false"/>
+    <arg name="result_display" default="true"/>
     <arg name="result_autosize" default="true"/>
     <arg name="result_draw_markers" default="true" />
     <arg name="result_draw_axis" default="true" />
-
-    <arg name="publish_corners" default="true" />
+    <arg name="publish_corners" default="false" />
     <arg name="publish_tf" default="true" />
-    <arg name="marker_length" default="true" />
-    <arg name="square_length" default="true" />
-    <arg name="x_square" default="true" />
-    <arg name="y_square" default="true" />
-    <arg name="num_marker" default="true" />
-    <arg name="dictionary_id" default="true" />
+    <!--    Size of the Charuco Square-->
+    <arg name="marker_length" default="0.025" />
+    <!--    Size of the checkboard square-->
+    <arg name="square_length" default="0.05" />
+    <arg name="x_square" default="6" />
+    <arg name="y_square" default="4" />
+    <arg name="num_marker" default="15" />
 
     <node ns="/" pkg="charuco_ros" type="node" name="charuco_node" output="screen">
         <remap from="/camera_info" to="/camera/rgb/camera_info" if="$(arg driver_astra)"/>
@@ -42,8 +42,6 @@
         <param name="num_marker" value="$(arg num_marker)" />
         <param name="dictionary_id" value="$(arg dictionary_id)" />
     </node>
-
-
 
     <group if="$(arg result_display)">
         <node ns="/" pkg="image_view" type="image_view" name="image_view" output="screen">
