@@ -69,8 +69,8 @@ public:
     it(nh),
     nMarkerDetectThreshold(0)    {
 
-        image_sub = it.subscribe("/camera/rgb/image_raw", 1, &CharucoBoard::image_callback, this);
-        cam_info_sub = nh.subscribe("/camera/rgb/camera_info", 1, &CharucoBoard::cam_info_callback, this);
+        image_sub = it.subscribe("/image", 1, &CharucoBoard::image_callback, this);
+        cam_info_sub = nh.subscribe("/camera_info", 1, &CharucoBoard::cam_info_callback, this);
 
         image_pub = it.advertise("result", 1);
         transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
@@ -94,7 +94,7 @@ public:
         if(publish_corners)
             corner_pub = nh.advertise<charuco_ros::CharucoCornerMsg>("corner",100);
         cv::aruco::PREDEFINED_DICTIONARY_NAME dictionaryId = cv::aruco::DICT_4X4_50; //TODO: Paul, this value is NOT the same for all the boards.
-        dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_ARUCO_ORIGINAL));
+        dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::PREDEFINED_DICTIONARY_NAME(cv::aruco::DICT_4X4_1000));
         detectorParams = cv::aruco::DetectorParameters::create();
         board = cv::aruco::CharucoBoard::create(x_square,y_square,square_length,marker_length,dictionary);
         detectorParams = cv::aruco::DetectorParameters::create();
@@ -121,6 +121,7 @@ public:
             cv::Rodrigues(guessRotMat, rvec);
             // detect markers
             cv::aruco::detectMarkers(inImage, dictionary, corners, ids, detectorParams, rejected);
+            ROS_WARN_STREAM("Num of id " << ids.size());
 
             if (ids.size() <= nMarkerDetectThreshold)
                 return;
@@ -236,7 +237,7 @@ public:
         board_to_camera.linear() << rot.at<double>(0, 0), rot.at<double>(0, 1), rot.at<double>(0, 2),
                              rot.at<double>(1, 0), rot.at<double>(1, 1), rot.at<double>(1, 2),
                              rot.at<double>(2, 0), rot.at<double>(2, 1), rot.at<double>(2, 2);
-        board_to_camera.translation() << tvec(0) , tvec(1), tvec(0) ;
+        board_to_camera.translation() << tvec(0) , tvec(1), tvec(2) ;
 
     }
 };

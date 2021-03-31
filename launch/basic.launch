@@ -14,9 +14,8 @@
     </group>
 
     <group if="$(arg driver_realsense)">
-        <!--        TODO: PAUL update this-->
         <include file="$(find realsense2_camera)/launch/rs_camera.launch"/>
-        <arg name="camera_info" default="file://$(env HOME)/.ros/camera_info/rgb_Astra_Orbbec.yaml"/>
+        <arg name="camera_info" default="file://$(env HOME)/.ros/camera_info.yaml"/>
     </group>
 
     <arg name="result_display" default="true"/>
@@ -25,13 +24,14 @@
     <arg name="result_draw_axis" default="true" />
     <arg name="publish_corners" default="false" />
     <arg name="publish_tf" default="true" />
-    <!--    Size of the Charuco Square-->
-    <arg name="marker_length" default="0.025" />
+    <!--    Size of the aruco Square-->
+    <arg name="marker_length" default="0.0408" />
     <!--    Size of the checkboard square-->
-    <arg name="square_length" default="0.05" />
-    <arg name="x_square" default="6" />
+    <arg name="square_length" default="0.060" />
+    <arg name="x_square" default="4" />
     <arg name="y_square" default="4" />
-    <arg name="num_marker" default="15" />
+    <arg name="num_marker" default="9" />
+    <arg name="dictionary_id" default="0" />
 
     <node ns="/" pkg="charuco_ros" type="node" name="charuco_node" output="screen">
         <remap from="/camera_info" to="/camera/rgb/camera_info" if="$(arg driver_astra)"/>
